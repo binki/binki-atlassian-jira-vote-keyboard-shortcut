@@ -39,15 +39,42 @@ document.body.addEventListener('keydown', e => {
   // in the meantime. See #2.
   triggering = () => {
     const issueVoteOptionsButtonElement = document.querySelector('[data-testid="issue-field-voters.ui.button.styled-button"]');
-    // Only if we are in an issue view screen.
-    if (!issueVoteOptionsButtonElement) return;
-    (async () => {
-      // Click the vote button to expand the dialog.
-      issueVoteOptionsButtonElement.click();
+    // On some sites, this button will only be visible if at least one vote is present on the issue.
+    if (issueVoteOptionsButtonElement) {
+      (async () => {
+        // Click the vote button to expand the dialog.
+        issueVoteOptionsButtonElement.click();
 
-      // Click the vote button in the expanded dialog.
-      (await whenElementQuerySelectorAsync(document, '[data-testid="issue-field-voters.ui.vote-toggle.tooltip--container"] button')).click();
-    })();
+        // Click the vote button in the expanded dialog.
+        (await whenElementQuerySelectorAsync(document, '[data-testid="issue-field-voters.ui.vote-toggle.tooltip--container"] button')).click();
+      })();
+    } else {
+      // Try using the API. Sometimes the votes are enabled but the button is hidden in a drop-down without
+      // a reliable way to querySelector() it (due to different sites likely having different lists of buttons
+      // in that drop-down along with multiple translations of Jira). First, identify if we are actually on
+      // an issue page and fetch the key.
+      const issueLinkElement = document.querySelector('[data-testid="issue.views.issue-base.foundation.breadcrumbs.current-issue.item"]');
+      if (issueLinkElement) {
+        const issueKey = /[^/]+$/.exec(issueLinkElement.href)[0];
+        (async () => {
+          const url = new URL(`/rest/api/3/issue/${encodeURIComponent(issueKey)}/votes`, document.URL);
+          const fetchResult = await fetch(url, {
+            method: 'POST',
+            headers: {
+              // Must avoid the default form content type to pass Jira’s CSRF check.
+              'Content-Type': 'text/plain',
+            },
+          });
+          if (fetchResult.ok) {
+            // Either we create fake GUI or just reload at this point.
+            document.location = document.location;
+          } else {
+            console.error(`Error submitting vote request to ${url}`, fetchResult);
+            console.error(await fetchResult.text());
+          }
+        })();
+      }
+    }
   };
 });
 
