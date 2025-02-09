@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name binki-atlassian-jira-vote-keyboard-shortcut
 // @homepageURL https://github.com/binki/binki-atlassian-jira-vote-keyboard-shortcut
-// @version 1.1.1
+// @version 1.2.0
 // @match https://*.atlassian.net/*
 // @require https://github.com/binki/binki-userscript-when-element-query-selector-async/raw/0a9c204bdc304a9e82f1c31d090fdfdf7b554930/binki-userscript-when-element-query-selector-async.js
 // ==/UserScript==
